@@ -1,4 +1,4 @@
-# PhyDemo Hub
+# Physiviz
 
 面向高中物理课堂的交互式可视化教学平台，采用原生 HTML、CSS、JavaScript 和 Three.js 构建。
 

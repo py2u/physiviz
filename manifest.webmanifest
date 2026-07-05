@@ -1,6 +1,6 @@
 {
-  "name": "PhyDemo Hub 高中物理可视化教学平台",
-  "short_name": "PhyDemo Hub",
+  "name": "Physiviz 高中物理可视化教学平台",
+  "short_name": "Physiviz",
   "description": "面向高中物理课堂的交互式可视化实验平台。",
   "lang": "zh-CN",
   "start_url": "./",

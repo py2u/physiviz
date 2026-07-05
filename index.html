@@ -3,22 +3,22 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="PhyDemo Hub 是面向高中物理课堂的交互式可视化教学平台，提供电场线、合等势面、简谐运动与单位圆投影等演示。">
+  <meta name="description" content="Physiviz 是面向高中物理课堂的交互式可视化教学平台，提供电场线、合等势面、简谐运动与单位圆投影等演示。">
   <meta name="keywords" content="高中物理,物理可视化,电场线,等势面,简谐运动,单位圆,课堂演示">
-  <meta name="author" content="PhyDemo Hub">
+  <meta name="author" content="Physiviz">
   <meta name="theme-color" content="#07111f">
   <meta name="robots" content="index, follow">
   <meta property="og:type" content="website">
   <meta property="og:locale" content="zh_CN">
-  <meta property="og:site_name" content="PhyDemo Hub">
-  <meta property="og:title" content="PhyDemo Hub｜高中物理可视化教学平台">
+  <meta property="og:site_name" content="Physiviz">
+  <meta property="og:title" content="Physiviz｜高中物理可视化教学平台">
   <meta property="og:description" content="让抽象物理规律真正看得见、可操作、可用于课堂。">
   <meta property="og:image" content="./og-cover.svg">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="canonical" href="https://py2u.github.io/physiviz/">
   <link rel="icon" href="./favicon.svg" type="image/svg+xml">
   <link rel="manifest" href="./manifest.webmanifest">
-  <title>PhyDemo Hub｜高中物理抽象概念可视化教学平台</title>
+  <title>Physiviz｜高中物理抽象概念可视化教学平台</title>
   <style>
     :root {
       color-scheme: dark;
@@ -260,7 +260,7 @@
 <body>
 <!--
   ============================================================================
-  PhyDemo Hub 架构说明
+  Physiviz 架构说明
   ============================================================================
   1. 平台层：AppState 保存全局状态；PHYSICS 统一管理物理常数；lessonRegistry
      是唯一课程注册入口。菜单从注册表动态生成，不与任何具体课程硬编码耦合。
@@ -276,7 +276,7 @@
   <div class="app">
     <aside class="sidebar">
       <div class="brand">
-        <h1>PhyDemo Lab</h1>
+        <h1>Physiviz</h1>
         <p>让抽象规律真正“看得见”</p>
       </div>
       <nav id="lesson-menu" aria-label="课程列表"></nav>
@@ -395,8 +395,8 @@
           button.classList.toggle('active', button.dataset.lesson === id));
         updateTips(next);
         document.title = next.id === 'home'
-          ? 'PhyDemo Hub｜高中物理可视化教学平台'
-          : `${next.title}｜PhyDemo Hub`;
+          ? 'Physiviz｜高中物理可视化教学平台'
+          : `${next.title}｜Physiviz`;
         document.getElementById('tip-open').hidden = next.id === 'home';
         closeMobileNav();
       } catch (error) {
@@ -419,7 +419,7 @@
             <div class="home-inner">
               <div class="hero">
                 <div>
-                  <div class="eyebrow">PHYDEMO HUB · 课堂即开即用</div>
+                  <div class="eyebrow">PHYSIVIZ · 课堂即开即用</div>
                   <h2>让抽象物理规律<br><span>真正“看得见”</span></h2>
                   <p>为高中物理课堂打造的交互式可视化实验平台。无需安装、无需登录，用严谨模型把电场、振动等抽象概念变成可观察、可操作的课堂体验。</p>
                   <div class="hero-actions">

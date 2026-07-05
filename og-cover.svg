@@ -15,7 +15,7 @@
     <circle cx="-165" cy="-92" r="14" fill="#ff7a86"/>
     <circle cx="165" cy="-92" r="14" fill="#6fa8ff"/>
   </g>
-  <text x="85" y="245" fill="#6ee7c8" font-family="Arial, Microsoft YaHei, sans-serif" font-size="34" font-weight="700">PHYDEMO HUB</text>
+  <text x="85" y="245" fill="#6ee7c8" font-family="Arial, Microsoft YaHei, sans-serif" font-size="34" font-weight="700">PHYSIVIZ</text>
   <text x="85" y="330" fill="#f8fafc" font-family="Arial, Microsoft YaHei, sans-serif" font-size="64" font-weight="700">高中物理可视化教学平台</text>
   <text x="85" y="400" fill="#b9c6d8" font-family="Arial, Microsoft YaHei, sans-serif" font-size="31">让抽象物理规律真正“看得见”</text>
 </svg>
