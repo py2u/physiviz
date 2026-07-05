@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://py2u.github.io/phydemo-hub/sitemap.xml
+Sitemap: https://py2u.github.io/physiviz/sitemap.xml
