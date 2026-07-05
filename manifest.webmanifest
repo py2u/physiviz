@@ -1,0 +1,19 @@
+{
+  "name": "PhyDemo Hub 高中物理可视化教学平台",
+  "short_name": "PhyDemo Hub",
+  "description": "面向高中物理课堂的交互式可视化实验平台。",
+  "lang": "zh-CN",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "icons": [
+    {
+      "src": "./favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

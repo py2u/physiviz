@@ -1,0 +1,1425 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="PhyDemo Hub 是面向高中物理课堂的交互式可视化教学平台，提供电场线、合等势面、简谐运动与单位圆投影等演示。">
+  <meta name="keywords" content="高中物理,物理可视化,电场线,等势面,简谐运动,单位圆,课堂演示">
+  <meta name="author" content="PhyDemo Hub">
+  <meta name="theme-color" content="#0f172a">
+  <meta name="robots" content="index, follow">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="zh_CN">
+  <meta property="og:site_name" content="PhyDemo Hub">
+  <meta property="og:title" content="PhyDemo Hub｜高中物理可视化教学平台">
+  <meta property="og:description" content="让抽象物理规律真正看得见、可操作、可用于课堂。">
+  <meta property="og:image" content="./og-cover.svg">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="canonical" href="https://py2u.github.io/phydemo-hub/">
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <title>PhyDemo Hub｜高中物理抽象概念可视化教学平台</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0f172a;
+      --panel: rgba(15, 23, 42, .82);
+      --panel-solid: #172033;
+      --line: rgba(148, 163, 184, .2);
+      --text: #e5edf9;
+      --muted: #94a3b8;
+      --primary: #22d3ee;
+      --primary-deep: #0891b2;
+      --positive: #fb5a67;
+      --negative: #4f8cff;
+      --radius: 16px;
+      font-size: 18px;
+    }
+    * { box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; }
+    body {
+      font-family: Inter, "Microsoft YaHei", system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+    button, input { font: inherit; }
+    button {
+      min-height: 44px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 9px 14px;
+      color: var(--text);
+      background: rgba(51, 65, 85, .7);
+      cursor: pointer;
+      transition: .18s ease;
+    }
+    button:hover { border-color: var(--primary); background: rgba(8, 145, 178, .22); }
+    button:focus-visible, input:focus-visible { outline: 3px solid rgba(34, 211, 238, .35); outline-offset: 2px; }
+    button.active { border-color: var(--primary); background: var(--primary-deep); box-shadow: 0 0 18px rgba(34, 211, 238, .25); }
+    .app { display: grid; grid-template-columns: 280px 1fr; height: 100%; }
+    .mobile-menu-button {
+      display: none; position: absolute; z-index: 42; left: 12px; top: 12px;
+      width: 46px; height: 46px; padding: 0; font-size: 1.3rem;
+      background: rgba(15,23,42,.88); backdrop-filter: blur(10px);
+    }
+    .mobile-nav-backdrop { display: none; position: fixed; inset: 0; z-index: 18; background: rgba(2,6,23,.68); }
+    .sidebar {
+      z-index: 20;
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid var(--line);
+      background: rgba(15, 23, 42, .88);
+      backdrop-filter: blur(18px);
+    }
+    .brand { padding: 26px 22px 20px; border-bottom: 1px solid var(--line); }
+    .brand h1 { margin: 0; font-size: 1.35rem; letter-spacing: .02em; }
+    .brand p { margin: 7px 0 0; color: var(--muted); font-size: .76rem; }
+    #lesson-menu { padding: 16px 12px; overflow: auto; }
+    .category { margin-bottom: 10px; }
+    .category-toggle {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      font-weight: 700;
+    }
+    .category-toggle span:last-child { transition: transform .2s; }
+    .category.open .category-toggle span:last-child { transform: rotate(90deg); }
+    .category-items { display: none; padding: 4px 0 4px 8px; }
+    .category.open .category-items { display: block; }
+    .lesson-link { width: 100%; text-align: left; margin-top: 6px; border-color: transparent; }
+    .lesson-link.active { color: #fff; border-color: rgba(34,211,238,.5); background: rgba(8,145,178,.24); }
+    .sidebar-footer { margin-top: auto; padding: 16px 20px; color: var(--muted); font-size: .72rem; border-top: 1px solid var(--line); }
+    main { min-width: 0; position: relative; overflow: hidden; }
+    #lesson-container { width: 100%; height: 100%; }
+    .lesson-shell { display: grid; grid-template-columns: minmax(0, 1fr) 330px; width: 100%; height: 100%; }
+    .stage { position: relative; min-width: 0; overflow: hidden; background: radial-gradient(circle at 45% 45%, #17284a, #080d19 72%); }
+    .stage canvas { display: block; width: 100%; height: 100%; }
+    .control-panel {
+      padding: 74px 20px 24px;
+      overflow-y: auto;
+      background: #111b2e;
+      border-left: 1px solid var(--line);
+    }
+    .control-panel h2 { margin: 0 0 6px; font-size: 1.22rem; }
+    .control-panel .subtitle { color: var(--muted); font-size: .78rem; margin-bottom: 22px; line-height: 1.55; }
+    .control-group { padding: 14px 0; border-top: 1px solid var(--line); }
+    .control-group label, .control-title { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 9px; font-size: .86rem; }
+    .value { color: var(--primary); font-variant-numeric: tabular-nums; }
+    input[type="range"] { width: 100%; accent-color: var(--primary); min-height: 28px; }
+    input[type="number"] {
+      min-height: 44px;
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      padding: 7px 10px;
+      color: var(--text);
+      background: rgba(15,23,42,.85);
+    }
+    select {
+      min-height: 44px;
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      padding: 7px 10px;
+      color: var(--text);
+      background: #0f172a;
+    }
+    .button-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+    .positive-btn.active { background: #be3045; border-color: #ff8792; }
+    .negative-btn.active { background: #2854b7; border-color: #79a2ff; }
+    .wide { grid-column: 1 / -1; }
+    .check-row { justify-content: flex-start !important; cursor: pointer; }
+    .check-row input { width: 20px; height: 20px; accent-color: var(--primary); }
+    .editor-card {
+      padding: 12px;
+      border: 1px solid rgba(34,211,238,.3);
+      border-radius: 12px;
+      background: rgba(8,145,178,.08);
+    }
+    .editor-card[hidden] { display: none; }
+    .status-line { color: var(--muted); font-size: .76rem; line-height: 1.5; }
+    .readouts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .readout { padding: 11px 6px; border: 1px solid var(--line); border-radius: 10px; text-align: center; background: rgba(15,23,42,.55); }
+    .readout b { display: block; color: var(--primary); font-size: .9rem; margin-top: 4px; font-variant-numeric: tabular-nums; }
+    .readout span { font-size: .68rem; color: var(--muted); }
+    .mode-hint {
+      position: absolute; left: 50%; top: 22px; transform: translateX(-50%);
+      z-index: 5; padding: 9px 15px; max-width: 75%; border: 1px solid var(--line);
+      border-radius: 999px; background: rgba(15,23,42,.78); backdrop-filter: blur(10px);
+      color: #cbd5e1; font-size: .76rem; text-align: center; pointer-events: none;
+    }
+    .tip-button {
+      position: absolute; z-index: 40; right: 20px; top: 18px; width: 46px; height: 46px;
+      padding: 0; border-radius: 50%; background: var(--primary-deep); font-size: 1.2rem; font-weight: 800;
+      box-shadow: 0 8px 24px rgba(0,0,0,.28);
+    }
+    .tip-button[hidden] { display: none; }
+    .drawer-backdrop { display: none; position: fixed; inset: 0; z-index: 45; background: rgba(2,6,23,.55); }
+    .drawer-backdrop.show { display: block; }
+    .tip-drawer {
+      position: fixed; z-index: 50; right: 0; top: 0; width: min(430px, 92vw); height: 100%;
+      padding: 28px; overflow-y: auto; transform: translateX(102%); transition: transform .25s ease;
+      border-left: 1px solid var(--line); background: #111b2e; box-shadow: -18px 0 50px rgba(0,0,0,.3);
+    }
+    .tip-drawer.open { transform: translateX(0); }
+    .drawer-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 26px; }
+    .drawer-head h2 { margin: 0; }
+    .drawer-head button { width: 44px; padding: 0; font-size: 1.3rem; }
+    .tip-drawer h3 { color: var(--primary); font-size: .95rem; margin: 24px 0 9px; }
+    .tip-drawer p, .tip-drawer li { color: #cbd5e1; line-height: 1.7; font-size: .86rem; }
+    .formula { padding: 14px; margin: 9px 0; border-radius: 10px; background: #0b1324; border-left: 3px solid var(--primary); font-family: Cambria, serif; }
+    .toast {
+      position: fixed; z-index: 80; left: 50%; bottom: 28px; transform: translate(-50%, 20px);
+      padding: 12px 18px; border: 1px solid rgba(251,191,36,.5); border-radius: 10px;
+      background: #422006; color: #fef3c7; opacity: 0; pointer-events: none; transition: .2s;
+    }
+    .toast.show { opacity: 1; transform: translate(-50%, 0); }
+    .error-card { margin: auto; max-width: 560px; padding: 28px; border: 1px solid #7f1d1d; border-radius: 16px; background: #2b1017; }
+    .error-card h2 { margin-top: 0; color: #fca5a5; }
+    .home {
+      height: 100%; overflow-y: auto;
+      background:
+        radial-gradient(circle at 76% 15%, rgba(8,145,178,.2), transparent 30%),
+        radial-gradient(circle at 12% 78%, rgba(79,70,229,.17), transparent 32%),
+        var(--bg);
+    }
+    .home-inner { width: min(1120px, calc(100% - 56px)); margin: 0 auto; padding: 76px 0 60px; }
+    .hero { display: grid; grid-template-columns: 1.15fr .85fr; align-items: center; gap: 52px; min-height: 390px; }
+    .eyebrow { color: var(--primary); font-weight: 800; letter-spacing: .12em; font-size: .74rem; }
+    .hero h2 { margin: 14px 0 18px; max-width: 720px; font-size: clamp(2.2rem, 5vw, 4.7rem); line-height: 1.08; letter-spacing: -.04em; }
+    .hero h2 span { color: var(--primary); }
+    .hero p { max-width: 650px; color: #b9c6d8; line-height: 1.8; font-size: 1rem; }
+    .hero-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
+    .hero-actions button { min-width: 150px; }
+    .primary-action { background: var(--primary-deep); border-color: var(--primary); }
+    .orbit-visual { position: relative; width: min(330px, 80vw); aspect-ratio: 1; margin: auto; }
+    .orbit { position: absolute; inset: 12%; border: 1px solid rgba(34,211,238,.35); border-radius: 50%; animation: spin 16s linear infinite; }
+    .orbit::before, .orbit::after { content: ""; position: absolute; width: 18px; height: 18px; border-radius: 50%; top: 50%; transform: translateY(-50%); box-shadow: 0 0 24px currentColor; }
+    .orbit::before { left: -9px; color: var(--positive); background: currentColor; }
+    .orbit::after { right: -9px; color: var(--negative); background: currentColor; }
+    .orbit-2 { inset: 25%; animation-direction: reverse; animation-duration: 11s; transform: rotate(60deg); }
+    .orbit-core { position: absolute; inset: 42%; border-radius: 50%; background: var(--primary); box-shadow: 0 0 48px rgba(34,211,238,.75); }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .section-heading { margin: 52px 0 18px; font-size: 1.35rem; }
+    .course-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+    .course-card { padding: 24px; border: 1px solid var(--line); border-radius: var(--radius); background: rgba(17,27,46,.72); backdrop-filter: blur(12px); }
+    .course-card h3 { margin: 10px 0; }
+    .course-card p { min-height: 52px; color: var(--muted); line-height: 1.6; font-size: .82rem; }
+    .course-icon { font-size: 1.8rem; }
+    .feature-strip { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 20px; }
+    .feature { padding: 16px; text-align: center; border-radius: 12px; background: rgba(30,41,59,.55); color: #cbd5e1; font-size: .78rem; }
+    .calculating {
+      position: absolute; z-index: 7; left: 50%; bottom: 22px; transform: translateX(-50%);
+      padding: 8px 14px; border-radius: 999px; background: rgba(8,145,178,.9);
+      font-size: .74rem; opacity: 0; transition: opacity .2s; pointer-events: none;
+    }
+    .calculating.show { opacity: 1; }
+    @media (max-width: 900px) {
+      :root { font-size: 16px; }
+      .app { display: block; }
+      .mobile-menu-button { display: block; }
+      .mobile-nav-backdrop.show { display: block; }
+      .sidebar {
+        position: fixed; inset: 0 auto 0 0; width: min(300px, 86vw);
+        transform: translateX(-102%); transition: transform .24s ease;
+      }
+      .sidebar.open { transform: translateX(0); }
+      .brand { padding: 24px 22px 18px; text-align: left; }
+      .brand h1 { font-size: 1.25rem; }
+      .brand p, .category-toggle span:first-child, .sidebar-footer { display: block; }
+      #lesson-menu { padding: 16px 12px; }
+      .category-toggle { justify-content: space-between; }
+      .category-items { padding-left: 8px; }
+      .lesson-link { padding: 9px 14px; text-align: left; font-size: .84rem; }
+      .lesson-shell { grid-template-columns: 1fr; grid-template-rows: minmax(300px, 1fr) auto; overflow: auto; }
+      .stage { min-height: 52vh; }
+      .control-panel { padding: 20px; border-left: 0; border-top: 1px solid var(--line); max-height: 48vh; }
+      .tip-button { right: 12px; top: 12px; }
+      .home-inner { width: min(100% - 32px, 680px); padding-top: 78px; }
+      .hero { grid-template-columns: 1fr; min-height: auto; gap: 30px; }
+      .hero h2 { font-size: clamp(2.2rem, 12vw, 3.6rem); }
+      .orbit-visual { width: min(250px, 70vw); }
+      .course-cards, .feature-strip { grid-template-columns: 1fr; }
+      .course-card p { min-height: 0; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; }
+    }
+  </style>
+</head>
+<body>
+<!--
+  ============================================================================
+  PhyDemo Hub 架构说明
+  ============================================================================
+  1. 平台层：AppState 保存全局状态；PHYSICS 统一管理物理常数；lessonRegistry
+     是唯一课程注册入口。菜单从注册表动态生成，不与任何具体课程硬编码耦合。
+  2. 课程层：每个课程只暴露 id/title/category/init/destroy/resize 标准接口。
+     课程内部封装渲染器、动画帧、DOM 事件和资源，切课时 destroy 完整释放。
+  3. 展示层：单文件 CSS 建立统一的投影友好界面；3D 课程使用 Three.js，
+     2D 课程仅使用 Canvas 2D。教学抽屉读取当前课程自带的 tips 数据。
+  4. 容错：课程初始化与物理计算均有异常边界。发生异常时保留当前已渲染状态，
+     以提示代替白屏。Three.js 加载失败时会显示明确的网络检查信息。
+  5. 扩展：新增课程只需实现标准接口并调用 registerLesson(course)，无需修改菜单。
+  ============================================================================
+-->
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <h1>PhyDemo Lab</h1>
+        <p>让抽象规律真正“看得见”</p>
+      </div>
+      <nav id="lesson-menu" aria-label="课程列表"></nav>
+      <div class="sidebar-footer">高中物理可视化实验平台</div>
+    </aside>
+    <main>
+      <button class="mobile-menu-button" id="mobile-menu-open" aria-label="打开课程导航">☰</button>
+      <div id="lesson-container"></div>
+      <button class="tip-button" id="tip-open" aria-label="打开教学提示" title="教学提示">?</button>
+    </main>
+  </div>
+  <div class="mobile-nav-backdrop" id="mobile-nav-backdrop"></div>
+  <div class="drawer-backdrop" id="drawer-backdrop"></div>
+  <aside class="tip-drawer" id="tip-drawer" aria-label="教学提示">
+    <div class="drawer-head"><h2>教学提示</h2><button id="tip-close" aria-label="关闭">×</button></div>
+    <div id="tip-content"></div>
+  </aside>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="./vendor/three.min.js" onerror="document.write('<script src=&quot;https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js&quot;><\/script>')"></script>
+  <script>
+    'use strict';
+
+    const AppState = {
+      currentLesson: null,
+      lessons: {},
+      theme: 'dark',
+      isMobile: window.matchMedia('(max-width: 900px)').matches
+    };
+
+    const PHYSICS = Object.freeze({
+      COULOMB_CONSTANT: 8.9875517923e9,
+      MIN_DISTANCE: 0.1,
+      CHARGE_UNIT: 1e-9,
+      TEST_CHARGE_MASS: 1,
+      MAX_TRAIL_POINTS: 200
+    });
+
+    const lessonRegistry = [];
+    let toastTimer = 0;
+
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.classList.remove('show'), 2600);
+    }
+
+    function safeRun(action, fallbackMessage = '计算出现异常，已保留当前状态') {
+      try { return action(); }
+      catch (error) {
+        console.error(error);
+        showToast(fallbackMessage);
+        return null;
+      }
+    }
+
+    function registerLesson(lesson) {
+      const required = ['id', 'title', 'category', 'init', 'destroy', 'resize'];
+      if (!required.every(key => lesson[key])) throw new Error('课程接口不完整');
+      lessonRegistry.push(lesson);
+      AppState.lessons[lesson.id] = lesson;
+    }
+
+    function buildMenu() {
+      const menu = document.getElementById('lesson-menu');
+      const categories = lessonRegistry.reduce((map, lesson) => {
+        (map[lesson.category] ||= []).push(lesson);
+        return map;
+      }, {});
+      menu.innerHTML = '';
+      Object.entries(categories).forEach(([category, lessons], index) => {
+        const section = document.createElement('section');
+        section.className = 'category open';
+        const toggle = document.createElement('button');
+        toggle.className = 'category-toggle';
+        toggle.innerHTML = `<span>${category}</span><span>›</span>`;
+        toggle.addEventListener('click', () => section.classList.toggle('open'));
+        const items = document.createElement('div');
+        items.className = 'category-items';
+        lessons.forEach((lesson, lessonIndex) => {
+          const button = document.createElement('button');
+          button.className = 'lesson-link';
+          button.dataset.lesson = lesson.id;
+          button.textContent = lesson.title;
+          button.addEventListener('click', () => switchLesson(lesson.id));
+          items.appendChild(button);
+        });
+        section.append(toggle, items);
+        menu.appendChild(section);
+      });
+    }
+
+    function updateTips(lesson) {
+      const tips = lesson.tips || { goals: [], formulas: [] };
+      document.getElementById('tip-content').innerHTML = `
+        <h3>学习目标</h3>
+        <ul>${tips.goals.map(item => `<li>${item}</li>`).join('')}</ul>
+        <h3>核心公式</h3>
+        ${tips.formulas.map(item => `<div class="formula">${item}</div>`).join('')}
+        ${tips.note ? `<h3>课堂建议</h3><p>${tips.note}</p>` : ''}
+      `;
+    }
+
+    function switchLesson(id) {
+      const next = AppState.lessons[id];
+      if (!next || AppState.currentLesson?.id === id) return;
+      const container = document.getElementById('lesson-container');
+      safeRun(() => AppState.currentLesson?.destroy(), '上一课程资源清理异常');
+      container.innerHTML = '';
+      try {
+        next.init(container);
+        AppState.currentLesson = next;
+        document.querySelectorAll('.lesson-link').forEach(button =>
+          button.classList.toggle('active', button.dataset.lesson === id));
+        updateTips(next);
+        document.title = next.id === 'home'
+          ? 'PhyDemo Hub｜高中物理可视化教学平台'
+          : `${next.title}｜PhyDemo Hub`;
+        document.getElementById('tip-open').hidden = next.id === 'home';
+        closeMobileNav();
+      } catch (error) {
+        console.error(error);
+        container.innerHTML = `<div class="stage" style="display:flex;padding:20px"><div class="error-card">
+          <h2>课程加载失败</h2><p>${error.message || '未知错误'}</p>
+          <p>请检查网络连接后刷新页面。界面其他功能仍可继续使用。</p></div></div>`;
+        showToast('课程加载失败，请查看页面提示');
+      }
+    }
+
+    const HomeLesson = {
+      id: 'home',
+      title: '平台首页',
+      category: '开始',
+      tips: { goals: [], formulas: [] },
+      init(container) {
+        container.innerHTML = `
+          <section class="home">
+            <div class="home-inner">
+              <div class="hero">
+                <div>
+                  <div class="eyebrow">PHYDEMO HUB · 课堂即开即用</div>
+                  <h2>让抽象物理规律<br><span>真正“看得见”</span></h2>
+                  <p>为高中物理课堂打造的交互式可视化实验平台。无需安装、无需登录，用严谨模型把电场、振动等抽象概念变成可观察、可操作的课堂体验。</p>
+                  <div class="hero-actions">
+                    <button class="primary-action" data-open-lesson="electric-field-3d">开始电场实验</button>
+                    <button data-open-lesson="shm-unit-circle">探索简谐运动</button>
+                  </div>
+                </div>
+                <div class="orbit-visual" aria-hidden="true">
+                  <div class="orbit"></div><div class="orbit orbit-2"></div><div class="orbit-core"></div>
+                </div>
+              </div>
+              <h2 class="section-heading">选择一个可视化课程</h2>
+              <div class="course-cards">
+                <article class="course-card">
+                  <div class="course-icon">⚡</div><h3>电场线与合等势面</h3>
+                  <p>在三维空间放置、编辑点电荷，观察严格按总电势计算的等势面和动态场线。</p>
+                  <button data-open-lesson="electric-field-3d">进入 3D 实验 →</button>
+                </article>
+                <article class="course-card">
+                  <div class="course-icon">〰</div><h3>简谐运动与单位圆</h3>
+                  <p>同步观察圆周运动投影、简谐振子与位移—时间图像，直观理解相位关系。</p>
+                  <button data-open-lesson="shm-unit-circle">进入 2D 实验 →</button>
+                </article>
+              </div>
+              <div class="feature-strip">
+                <div class="feature">✓ 物理公式严格对应</div>
+                <div class="feature">✓ 无账号、打开即用</div>
+                <div class="feature">✓ 支持离线课堂环境</div>
+              </div>
+            </div>
+          </section>`;
+        container.querySelectorAll('[data-open-lesson]').forEach(button =>
+          button.addEventListener('click', () => switchLesson(button.dataset.openLesson)));
+      },
+      destroy() {},
+      resize() {}
+    };
+
+    const ElectricFieldLesson = (() => {
+      let root, stage, renderer, scene, camera, raycaster, pointer;
+      let animationId = 0;
+      let equipotentialTimer = 0;
+      let visualizationGeneration = 0;
+      let charges = [];
+      let fieldObjects = [];
+      let equipotentialObjects = [];
+      let testCharge = null;
+      let selectedCharge = null;
+      let history = [];
+      let selectedMode = null;
+      let density = 80;
+      let magnitude = 1;
+      let showEquipotential = true;
+      let isPointerDown = false;
+      let pointerStart = { x: 0, y: 0 };
+      const cameraState = { theta: .75, phi: 1.02, radius: 19, target: null };
+      const listeners = [];
+
+      function listen(target, type, handler, options) {
+        target.addEventListener(type, handler, options);
+        listeners.push(() => target.removeEventListener(type, handler, options));
+      }
+
+      function calculateField(position) {
+        return safeRun(() => {
+          const field = new THREE.Vector3();
+          for (const charge of charges) {
+            const offset = position.clone().sub(charge.position);
+            // 计算场点到点电荷的实际距离。
+            const rawDistance = offset.length();
+            // 距离小于 0.1 m 时截断，避免点电荷奇异导致数值发散。
+            const distance = Math.max(rawDistance, PHYSICS.MIN_DISTANCE);
+            // 库仑场强标量：E = kQ/r²，Q 使用纳库仑教学尺度。
+            const scalar = PHYSICS.COULOMB_CONSTANT * charge.q * PHYSICS.CHARGE_UNIT / (distance * distance);
+            // 单位方向由电荷指向场点；负电荷通过 Q 的符号自动反向。
+            if (rawDistance > 1e-8) field.add(offset.normalize().multiplyScalar(scalar));
+          }
+          return field;
+        }) || new THREE.Vector3();
+      }
+
+      function calculatePotential(position) {
+        return safeRun(() => {
+          let potential = 0;
+          for (const charge of charges) {
+            // 计算场点与当前电荷的距离。
+            const rawDistance = position.distanceTo(charge.position);
+            // 使用同一最小距离截断，确保电势有限且可显示。
+            const distance = Math.max(rawDistance, PHYSICS.MIN_DISTANCE);
+            // 依据 V = kQ/r 叠加各点电荷产生的电势。
+            potential += PHYSICS.COULOMB_CONSTANT * charge.q * PHYSICS.CHARGE_UNIT / distance;
+          }
+          // 返回所有电荷电势的代数和。
+          return potential;
+        }) ?? 0;
+      }
+
+      function makeTextSprite(text) {
+        const canvas = document.createElement('canvas');
+        canvas.width = 128; canvas.height = 128;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 82px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(text, 64, 66);
+        const texture = new THREE.CanvasTexture(canvas);
+        const material = new THREE.SpriteMaterial({ map: texture, transparent: true });
+        const sprite = new THREE.Sprite(material);
+        sprite.scale.set(1.05, 1.05, 1);
+        sprite.userData.texture = texture;
+        return sprite;
+      }
+
+      function snapshotCharges() {
+        return charges.map(charge => ({
+          q: charge.q,
+          x: charge.position.x,
+          y: charge.position.y,
+          z: charge.position.z
+        }));
+      }
+
+      function pushHistory() {
+        history.push(snapshotCharges());
+        if (history.length > 30) history.shift();
+        updateStatus();
+      }
+
+      function addCharge(position, sign, amount = magnitude, options = {}) {
+        safeRun(() => {
+          if (options.record !== false) pushHistory();
+          const group = new THREE.Group();
+          const color = sign > 0 ? 0xff465b : 0x3b82f6;
+          const geometry = new THREE.SphereGeometry(.43, 28, 20);
+          const material = new THREE.MeshStandardMaterial({
+            color, emissive: color, emissiveIntensity: .65, roughness: .25
+          });
+          const sphere = new THREE.Mesh(geometry, material);
+          const glow = new THREE.PointLight(color, 2.2, 4);
+          const label = makeTextSprite(sign > 0 ? '+' : '−');
+          label.position.y = .02;
+          group.add(sphere, glow, label);
+          group.position.copy(position);
+          group.position.y = .48;
+          scene.add(group);
+          const charge = { q: sign * amount, position: group.position.clone(), group, sphere };
+          sphere.userData.charge = charge;
+          charges.push(charge);
+          if (options.rebuild !== false) rebuildVisualizations();
+          updateStatus();
+        }, '电荷添加失败，场景已保持原状');
+      }
+
+      function disposeObject(object) {
+        object.traverse(child => {
+          if (child.geometry) child.geometry.dispose();
+          if (child.material) {
+            const materials = Array.isArray(child.material) ? child.material : [child.material];
+            materials.forEach(material => {
+              if (material.map) material.map.dispose();
+              material.dispose();
+            });
+          }
+          if (child.userData?.texture) child.userData.texture.dispose();
+        });
+      }
+
+      function clearObjectList(list) {
+        list.forEach(object => { scene.remove(object); disposeObject(object); });
+        list.length = 0;
+      }
+
+      function clearCharges(options = {}) {
+        if (options.record !== false && charges.length) pushHistory();
+        selectCharge(null);
+        charges.forEach(charge => { scene.remove(charge.group); disposeObject(charge.group); });
+        charges.length = 0;
+        clearObjectList(fieldObjects);
+        clearObjectList(equipotentialObjects);
+        if (testCharge) {
+          scene.remove(testCharge.group);
+          disposeObject(testCharge.group);
+          testCharge = null;
+        }
+        updateStatus();
+      }
+
+      function restoreSnapshot(snapshot) {
+        clearCharges({ record: false });
+        snapshot.forEach(item => addCharge(
+          new THREE.Vector3(item.x, 0, item.z),
+          Math.sign(item.q) || 1,
+          Math.abs(item.q),
+          { record: false, rebuild: false }
+        ));
+        rebuildVisualizations();
+        updateStatus();
+      }
+
+      function undo() {
+        if (!history.length) {
+          showToast('暂无可撤销的操作');
+          return;
+        }
+        restoreSnapshot(history.pop());
+        showToast('已撤销上一步');
+      }
+
+      function updateStatus() {
+        if (!root) return;
+        const status = root.querySelector('#chargeStatus');
+        if (status) status.textContent = `当前 ${charges.length} 个电荷 · 可撤销 ${history.length} 步`;
+      }
+
+      function selectCharge(charge) {
+        if (selectedCharge?.sphere?.material) selectedCharge.sphere.material.emissiveIntensity = .65;
+        selectedCharge = charge;
+        const editor = root?.querySelector('#chargeEditor');
+        if (!editor) return;
+        editor.hidden = !charge;
+        if (!charge) return;
+        charge.sphere.material.emissiveIntensity = 1.8;
+        root.querySelector('#editChargeMagnitude').value = Math.abs(charge.q);
+        root.querySelector('#editChargeValue').textContent = `${Math.abs(charge.q).toFixed(1)} nC`;
+        root.querySelector('#editChargeSign').value = charge.q > 0 ? 'positive' : 'negative';
+      }
+
+      function traceLine(origin, directionSign) {
+        const points = [origin.clone()];
+        let current = origin.clone();
+        const maxPoints = charges.length > 15 ? 50 : 150;
+        for (let i = 0; i < maxPoints; i++) {
+          const field = calculateField(current);
+          const strength = field.length();
+          if (!Number.isFinite(strength) || strength < .002) break;
+          current = current.clone().add(field.normalize().multiplyScalar(.13 * directionSign));
+          if (Math.abs(current.x) > 12 || Math.abs(current.z) > 12 || current.y > 8 || current.y < .05) break;
+          points.push(current.clone());
+          const hit = charges.some(charge => current.distanceTo(charge.position) < .42);
+          if (hit && points.length > 5) break;
+        }
+        return points;
+      }
+
+      function addFieldCurve(points) {
+        if (points.length < 4) return;
+        const curve = new THREE.CatmullRomCurve3(points);
+        const samples = curve.getPoints(Math.min(points.length * 2, 220));
+        const positions = [];
+        const colors = [];
+        samples.forEach(point => {
+          positions.push(point.x, point.y, point.z);
+          const normalized = Math.min(calculateField(point).length() / 5, 1);
+          const color = new THREE.Color().setHSL(.56 - normalized * .5, .9, .58);
+          colors.push(color.r, color.g, color.b);
+        });
+        const geometry = new THREE.BufferGeometry();
+        geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+        geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+        const material = new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: .86 });
+        const line = new THREE.Line(geometry, material);
+        scene.add(line);
+        fieldObjects.push(line);
+      }
+
+      function interpolateIsoPoint(a, b, va, vb, level) {
+        const denominator = vb - va;
+        const t = Math.abs(denominator) < 1e-9 ? .5 : (level - va) / denominator;
+        return a.clone().lerp(b, Math.max(0, Math.min(1, t)));
+      }
+
+      function addIsoTetrahedron(points, values, level, vertices) {
+        const intersections = [];
+        const edges = [[0,1], [0,2], [0,3], [1,2], [1,3], [2,3]];
+        edges.forEach(([a, b]) => {
+          const da = values[a] - level;
+          const db = values[b] - level;
+          if ((da < 0 && db >= 0) || (da >= 0 && db < 0)) {
+            intersections.push(interpolateIsoPoint(points[a], points[b], values[a], values[b], level));
+          }
+        });
+        if (intersections.length < 3) return;
+        const appendTriangle = (a, b, c) => {
+          vertices.push(a.x, a.y, a.z, b.x, b.y, b.z, c.x, c.y, c.z);
+        };
+        appendTriangle(intersections[0], intersections[1], intersections[2]);
+        if (intersections.length === 4) appendTriangle(intersections[0], intersections[2], intersections[3]);
+      }
+
+      function buildCombinedEquipotentialSurfaces() {
+        if (!showEquipotential || !charges.length) return;
+        // 对空间规则网格的每个顶点计算“所有点电荷的总电势”。
+        const resolution = AppState.isMobile ? 9 : (charges.length > 8 ? 10 : 13);
+        const bounds = { minX: -8, maxX: 8, minY: .08, maxY: 6.5, minZ: -8, maxZ: 8 };
+        const nx = resolution, ny = Math.max(9, Math.round(resolution * .45)), nz = resolution;
+        const dx = (bounds.maxX - bounds.minX) / nx;
+        const dy = (bounds.maxY - bounds.minY) / ny;
+        const dz = (bounds.maxZ - bounds.minZ) / nz;
+        const index = (x, y, z) => x + (nx + 1) * (y + (ny + 1) * z);
+        const values = new Float32Array((nx + 1) * (ny + 1) * (nz + 1));
+        for (let z = 0; z <= nz; z++) {
+          for (let y = 0; y <= ny; y++) {
+            for (let x = 0; x <= nx; x++) {
+              const point = new THREE.Vector3(bounds.minX + x * dx, bounds.minY + y * dy, bounds.minZ + z * dz);
+              values[index(x, y, z)] = calculatePotential(point);
+            }
+          }
+        }
+        // 电势层级随当前最大电量缩放，使 0.5–5 nC 均有清晰可见的等势面。
+        const maxCharge = Math.max(...charges.map(charge => Math.abs(charge.q)), .5);
+        const baseLevel = PHYSICS.COULOMB_CONSTANT * PHYSICS.CHARGE_UNIT * maxCharge / 2.5;
+        const levels = [-2 * baseLevel, -baseLevel, baseLevel, 2 * baseLevel];
+        const cubeCorners = [[0,0,0],[1,0,0],[1,1,0],[0,1,0],[0,0,1],[1,0,1],[1,1,1],[0,1,1]];
+        const tetrahedra = [[0,5,1,6],[0,1,2,6],[0,2,3,6],[0,3,7,6],[0,7,4,6],[0,4,5,6]];
+        levels.forEach((level, levelIndex) => {
+          const vertices = [];
+          for (let z = 0; z < nz; z++) {
+            for (let y = 0; y < ny; y++) {
+              for (let x = 0; x < nx; x++) {
+                const cubeValues = cubeCorners.map(([cx, cy, cz]) => values[index(x + cx, y + cy, z + cz)]);
+                // 若当前立方单元的电势范围不包含目标值，它不可能产生等值面。
+                if (level < Math.min(...cubeValues) || level > Math.max(...cubeValues)) continue;
+                const points = cubeCorners.map(([cx, cy, cz]) => new THREE.Vector3(
+                  bounds.minX + (x + cx) * dx,
+                  bounds.minY + (y + cy) * dy,
+                  bounds.minZ + (z + cz) * dz
+                ));
+                tetrahedra.forEach(tetra => addIsoTetrahedron(
+                  tetra.map(i => points[i]),
+                  tetra.map(i => cubeValues[i]),
+                  level,
+                  vertices
+                ));
+              }
+            }
+          }
+          if (!vertices.length) return;
+          const geometry = new THREE.BufferGeometry();
+          geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+          geometry.computeVertexNormals();
+          const positive = level > 0;
+          const material = new THREE.MeshPhongMaterial({
+            color: positive ? 0xff6475 : 0x60a5fa,
+            emissive: positive ? 0x5b111f : 0x102c66,
+            transparent: true,
+            opacity: levelIndex % 2 ? .17 : .1,
+            side: THREE.DoubleSide,
+            depthWrite: false,
+            shininess: 55
+          });
+          const mesh = new THREE.Mesh(geometry, material);
+          scene.add(mesh);
+          equipotentialObjects.push(mesh);
+        });
+      }
+
+      function rebuildVisualizations() {
+        safeRun(() => {
+          const generation = ++visualizationGeneration;
+          clearTimeout(equipotentialTimer);
+          clearObjectList(fieldObjects);
+          clearObjectList(equipotentialObjects);
+          root.querySelector('.calculating')?.classList.remove('show');
+          if (!charges.length) return;
+          const effectiveDensity = AppState.isMobile ? Math.min(density, 90) : density;
+          const perCharge = Math.max(4, Math.round(effectiveDensity / charges.length));
+          charges.forEach(charge => {
+            const traceDirection = charge.q > 0 ? 1 : -1;
+            for (let i = 0; i < perCharge; i++) {
+              const angle = i / perCharge * Math.PI * 2;
+              const elevation = .18 + (i % 4) * .34;
+              const radial = Math.sqrt(Math.max(0, 1 - elevation * elevation * .22));
+              const origin = charge.position.clone().add(new THREE.Vector3(
+                Math.cos(angle) * .5 * radial,
+                .12 + elevation * .25,
+                Math.sin(angle) * .5 * radial
+              ));
+              addFieldCurve(traceLine(origin, traceDirection));
+            }
+          });
+          if (showEquipotential) {
+            root.querySelector('.calculating')?.classList.add('show');
+            // 让浏览器先完成交互反馈和场线绘制，再执行较重的三维等值面提取。
+            equipotentialTimer = setTimeout(() => {
+              if (generation !== visualizationGeneration || !root) return;
+              safeRun(buildCombinedEquipotentialSurfaces, '等势面计算失败，电场线仍可继续使用');
+              root?.querySelector('.calculating')?.classList.remove('show');
+            }, 30);
+          }
+        }, '场线更新失败，已保留电荷状态');
+      }
+
+      function releaseTestCharge(position) {
+        safeRun(() => {
+          if (testCharge) {
+            scene.remove(testCharge.group);
+            disposeObject(testCharge.group);
+          }
+          const group = new THREE.Group();
+          const ball = new THREE.Mesh(
+            new THREE.SphereGeometry(.2, 18, 12),
+            new THREE.MeshStandardMaterial({ color: 0xfde047, emissive: 0xeab308, emissiveIntensity: .8 })
+          );
+          const trailGeometry = new THREE.BufferGeometry();
+          const trailMaterial = new THREE.LineBasicMaterial({ color: 0xfde047, transparent: true, opacity: .75 });
+          const trail = new THREE.Line(trailGeometry, trailMaterial);
+          group.add(ball, trail);
+          group.position.copy(position);
+          group.position.y = .35;
+          scene.add(group);
+          testCharge = { group, ball, trail, velocity: new THREE.Vector3(), points: [group.position.clone()] };
+        }, '试探电荷释放失败');
+      }
+
+      function updateTestCharge(dt) {
+        if (!testCharge || !charges.length) return;
+        safeRun(() => {
+          const field = calculateField(testCharge.group.position);
+          const acceleration = field.clone().multiplyScalar(.12 / PHYSICS.TEST_CHARGE_MASS);
+          testCharge.velocity.addScaledVector(acceleration, dt);
+          if (testCharge.velocity.length() > 3.5) testCharge.velocity.setLength(3.5);
+          testCharge.group.position.addScaledVector(testCharge.velocity, dt);
+          testCharge.points.push(testCharge.group.position.clone());
+          if (testCharge.points.length > PHYSICS.MAX_TRAIL_POINTS) testCharge.points.shift();
+          const localPoints = testCharge.points.map(point => point.clone().sub(testCharge.group.position));
+          testCharge.trail.geometry.dispose();
+          testCharge.trail.geometry = new THREE.BufferGeometry().setFromPoints(localPoints);
+          const p = testCharge.group.position;
+          if (Math.abs(p.x) > 12 || Math.abs(p.z) > 12 || p.y < .05 || p.y > 8) testCharge = null;
+        }, '试探电荷计算异常，运动已暂停');
+      }
+
+      function setCameraPosition() {
+        const { theta, phi, radius, target } = cameraState;
+        camera.position.set(
+          target.x + radius * Math.sin(phi) * Math.cos(theta),
+          target.y + radius * Math.cos(phi),
+          target.z + radius * Math.sin(phi) * Math.sin(theta)
+        );
+        camera.lookAt(target);
+      }
+
+      function resetCamera() {
+        cameraState.theta = .75; cameraState.phi = 1.02; cameraState.radius = 19;
+        cameraState.target.set(0, 0, 0);
+        setCameraPosition();
+      }
+
+      function setMode(mode) {
+        selectedMode = selectedMode === mode ? null : mode;
+        root.querySelectorAll('[data-mode]').forEach(button =>
+          button.classList.toggle('active', button.dataset.mode === selectedMode));
+        const hint = root.querySelector('.mode-hint');
+        hint.textContent = selectedMode === 'positive' ? '添加模式：单击地面放置正电荷'
+          : selectedMode === 'negative' ? '添加模式：单击地面放置负电荷'
+          : selectedMode === 'test' ? '释放模式：单击地面释放试探正电荷'
+          : '先在右侧选择模式，再单击地面';
+      }
+
+      const presets = {
+        single: [{ x: 0, z: 0, q: 1 }],
+        dipole: [{ x: -2.2, z: 0, q: 1 }, { x: 2.2, z: 0, q: -1 }],
+        same: [{ x: -2.2, z: 0, q: 1 }, { x: 2.2, z: 0, q: 1 }],
+        quadrupole: [
+          { x: -2.2, z: -2.2, q: 1 }, { x: 2.2, z: -2.2, q: -1 },
+          { x: -2.2, z: 2.2, q: -1 }, { x: 2.2, z: 2.2, q: 1 }
+        ]
+      };
+
+      function applyPreset(name) {
+        const preset = presets[name];
+        if (!preset) return;
+        pushHistory();
+        clearCharges({ record: false });
+        preset.forEach(item => addCharge(
+          new THREE.Vector3(item.x, 0, item.z),
+          Math.sign(item.q),
+          Math.abs(item.q) * magnitude,
+          { record: false, rebuild: false }
+        ));
+        rebuildVisualizations();
+        showToast('典型场景已生成');
+      }
+
+      function updatePointer(event) {
+        const rect = renderer.domElement.getBoundingClientRect();
+        pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+        pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+        raycaster.setFromCamera(pointer, camera);
+      }
+
+      function pickCharge(event) {
+        updatePointer(event);
+        const hits = raycaster.intersectObjects(charges.map(charge => charge.sphere), false);
+        return hits[0]?.object?.userData?.charge || null;
+      }
+
+      function groundIntersection(event) {
+        updatePointer(event);
+        const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+        const point = new THREE.Vector3();
+        return raycaster.ray.intersectPlane(plane, point) ? point : null;
+      }
+
+      function onStageClick(event) {
+        const moved = Math.hypot(event.clientX - pointerStart.x, event.clientY - pointerStart.y);
+        if (moved > 5) return;
+        const pickedCharge = pickCharge(event);
+        if (pickedCharge) {
+          setMode(null);
+          selectCharge(pickedCharge);
+          showToast('已选中电荷，可在右侧编辑');
+          return;
+        }
+        if (!selectedMode) {
+          showToast('请先在右侧选择电荷类型');
+          return;
+        }
+        const point = groundIntersection(event);
+        if (!point || Math.abs(point.x) > 9.5 || Math.abs(point.z) > 9.5) return;
+        if (selectedMode === 'test') releaseTestCharge(point);
+        else addCharge(point, selectedMode === 'positive' ? 1 : -1);
+      }
+
+      function initThree() {
+        if (!window.THREE) throw new Error('本地及在线 Three.js 均未能加载，请检查 vendor 目录是否完整。');
+        scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x08101f, .025);
+        camera = new THREE.PerspectiveCamera(48, 1, .1, 100);
+        cameraState.target = new THREE.Vector3(0, 0, 0);
+        renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.outputColorSpace = THREE.SRGBColorSpace;
+        renderer.shadowMap.enabled = true;
+        stage.appendChild(renderer.domElement);
+        raycaster = new THREE.Raycaster();
+        pointer = new THREE.Vector2();
+        const hemi = new THREE.HemisphereLight(0xb8d9ff, 0x101827, 1.3);
+        const directional = new THREE.DirectionalLight(0xffffff, 1.2);
+        directional.position.set(5, 10, 4);
+        scene.add(hemi, directional);
+        const grid = new THREE.GridHelper(20, 20, 0x2dd4bf, 0x334155);
+        grid.material.transparent = true; grid.material.opacity = .5;
+        scene.add(grid);
+        resetCamera();
+      }
+
+      function bindControls() {
+        root.querySelectorAll('[data-mode]').forEach(button =>
+          listen(button, 'click', () => setMode(button.dataset.mode)));
+        const densityInput = root.querySelector('#fieldLineDensity');
+        listen(densityInput, 'input', () => {
+          density = Number(densityInput.value);
+          root.querySelector('#densityValue').textContent = density;
+        });
+        listen(densityInput, 'change', rebuildVisualizations);
+        const magnitudeInput = root.querySelector('#chargeMagnitude');
+        listen(magnitudeInput, 'input', () => {
+          magnitude = Number(magnitudeInput.value);
+          root.querySelector('#magnitudeValue').textContent = magnitude.toFixed(1) + ' nC';
+        });
+        const equipotentialInput = root.querySelector('#showEquipotential');
+        listen(equipotentialInput, 'change', () => {
+          showEquipotential = equipotentialInput.checked;
+          rebuildVisualizations();
+        });
+        listen(root.querySelector('#presetScene'), 'change', event => {
+          if (event.target.value) applyPreset(event.target.value);
+          event.target.value = '';
+        });
+        listen(root.querySelector('#undoChargeAction'), 'click', undo);
+        listen(root.querySelector('#clearAllCharges'), 'click', () => {
+          clearCharges();
+          showToast('已清空全部电荷');
+        });
+        const editMagnitude = root.querySelector('#editChargeMagnitude');
+        listen(editMagnitude, 'input', () => {
+          root.querySelector('#editChargeValue').textContent = `${Number(editMagnitude.value).toFixed(1)} nC`;
+        });
+        listen(editMagnitude, 'change', () => {
+          if (!selectedCharge) return;
+          pushHistory();
+          selectedCharge.q = Math.sign(selectedCharge.q) * Number(editMagnitude.value);
+          rebuildVisualizations();
+        });
+        listen(root.querySelector('#editChargeSign'), 'change', event => {
+          if (!selectedCharge) return;
+          pushHistory();
+          const sign = event.target.value === 'positive' ? 1 : -1;
+          selectedCharge.q = sign * Math.abs(selectedCharge.q);
+          const color = sign > 0 ? 0xff465b : 0x3b82f6;
+          selectedCharge.sphere.material.color.setHex(color);
+          selectedCharge.sphere.material.emissive.setHex(color);
+          const oldLabel = selectedCharge.group.children.find(child => child.isSprite);
+          if (oldLabel) {
+            selectedCharge.group.remove(oldLabel);
+            disposeObject(oldLabel);
+          }
+          const newLabel = makeTextSprite(sign > 0 ? '+' : '−');
+          selectedCharge.group.add(newLabel);
+          rebuildVisualizations();
+        });
+        listen(root.querySelector('#deleteSelectedCharge'), 'click', () => {
+          if (!selectedCharge) return;
+          pushHistory();
+          const target = selectedCharge;
+          selectCharge(null);
+          charges = charges.filter(charge => charge !== target);
+          scene.remove(target.group);
+          disposeObject(target.group);
+          rebuildVisualizations();
+          updateStatus();
+          showToast('已删除选中电荷');
+        });
+        listen(root.querySelector('#resetCamera'), 'click', resetCamera);
+        const canvas = renderer.domElement;
+        listen(canvas, 'pointerdown', event => {
+          isPointerDown = true; pointerStart = { x: event.clientX, y: event.clientY };
+          canvas.setPointerCapture(event.pointerId);
+        });
+        listen(canvas, 'pointermove', event => {
+          if (!isPointerDown || event.buttons !== 1) return;
+          const dx = event.movementX || 0, dy = event.movementY || 0;
+          if (Math.hypot(event.clientX - pointerStart.x, event.clientY - pointerStart.y) > 5) {
+            cameraState.theta -= dx * .007;
+            cameraState.phi = Math.max(.25, Math.min(1.48, cameraState.phi + dy * .007));
+            setCameraPosition();
+          }
+        });
+        listen(canvas, 'pointerup', event => { isPointerDown = false; onStageClick(event); });
+        listen(canvas, 'wheel', event => {
+          event.preventDefault();
+          cameraState.radius = Math.max(8, Math.min(30, cameraState.radius + event.deltaY * .012));
+          setCameraPosition();
+        }, { passive: false });
+      }
+
+      let lastTime = 0;
+      function animate(time) {
+        animationId = requestAnimationFrame(animate);
+        const dt = Math.min((time - lastTime) / 1000 || 0, .033);
+        lastTime = time;
+        updateTestCharge(dt);
+        renderer.render(scene, camera);
+      }
+
+      return {
+        id: 'electric-field-3d',
+        title: '电场线与等势面',
+        category: '电磁学',
+        tips: {
+          goals: ['理解点电荷电场的方向与平方反比规律', '观察电场线疏密与场强的关系', '比较总电势等值面与电场线的空间关系'],
+          formulas: ['E = kQ / r²', 'V = kQ / r', 'E⃗<sub>合</sub> = ΣE⃗<sub>i</sub>'],
+          note: '可直接选择“电偶极子”预设。透明曲面由总电势 ΣkQi/ri 提取，点击任一电荷可修改电量和符号。'
+        },
+        init(container) {
+          root = document.createElement('div');
+          root.className = 'lesson-shell';
+          root.innerHTML = `
+            <section class="stage"><div class="mode-hint">先在右侧选择模式，再单击地面</div><div class="calculating">正在计算合等势面…</div></section>
+            <aside class="control-panel">
+              <h2>电场线与等势面</h2>
+              <div class="subtitle">拖动旋转视角 · 滚轮缩放 · 单击网格放置</div>
+              <div class="control-group">
+                <div class="control-title">放置模式</div>
+                <div class="button-grid">
+                  <button class="positive-btn" data-mode="positive">＋ 正电荷</button>
+                  <button class="negative-btn" data-mode="negative">− 负电荷</button>
+                  <button class="wide" data-mode="test">● 释放试探电荷</button>
+                </div>
+              </div>
+              <div class="control-group">
+                <label for="presetScene"><span>典型场景预设</span></label>
+                <select id="presetScene">
+                  <option value="">请选择场景…</option>
+                  <option value="single">单个正电荷</option>
+                  <option value="dipole">等量异种电荷（电偶极子）</option>
+                  <option value="same">等量同种电荷</option>
+                  <option value="quadrupole">四极子</option>
+                </select>
+              </div>
+              <div class="control-group">
+                <label for="fieldLineDensity"><span>场线密度</span><span class="value" id="densityValue">80</span></label>
+                <input id="fieldLineDensity" type="range" min="20" max="200" value="80">
+              </div>
+              <div class="control-group">
+                <label for="chargeMagnitude"><span>新电荷电量</span><span class="value" id="magnitudeValue">1.0 nC</span></label>
+                <input id="chargeMagnitude" type="range" min="0.5" max="5" step="0.1" value="1">
+              </div>
+              <div class="control-group">
+                <label class="check-row"><input id="showEquipotential" type="checkbox" checked>显示等势面</label>
+              </div>
+              <div class="control-group editor-card" id="chargeEditor" hidden>
+                <div class="control-title">编辑选中电荷</div>
+                <label for="editChargeMagnitude"><span>电量大小</span><span class="value" id="editChargeValue">1.0 nC</span></label>
+                <input id="editChargeMagnitude" type="range" min="0.5" max="5" step="0.1" value="1">
+                <label for="editChargeSign"><span>电荷符号</span></label>
+                <select id="editChargeSign">
+                  <option value="positive">正电荷</option>
+                  <option value="negative">负电荷</option>
+                </select>
+                <button class="wide" id="deleteSelectedCharge" style="width:100%;margin-top:10px">删除该电荷</button>
+              </div>
+              <div class="control-group button-grid">
+                <button id="clearAllCharges">清空所有</button>
+                <button id="resetCamera">视角复位</button>
+                <button class="wide" id="undoChargeAction">↶ 撤销上一步</button>
+              </div>
+              <div class="status-line" id="chargeStatus">当前 0 个电荷 · 可撤销 0 步</div>
+            </aside>`;
+          container.appendChild(root);
+          stage = root.querySelector('.stage');
+          charges = []; fieldObjects = []; equipotentialObjects = []; history = [];
+          selectedMode = null; selectedCharge = null; testCharge = null; lastTime = 0;
+          initThree();
+          bindControls();
+          this.resize();
+          animationId = requestAnimationFrame(animate);
+        },
+        destroy() {
+          cancelAnimationFrame(animationId);
+          clearTimeout(equipotentialTimer);
+          visualizationGeneration++;
+          listeners.splice(0).forEach(remove => remove());
+          if (scene) {
+            scene.traverse(object => {
+              if (object.geometry) object.geometry.dispose();
+              if (object.material) {
+                const materials = Array.isArray(object.material) ? object.material : [object.material];
+                materials.forEach(material => {
+                  if (material.map) material.map.dispose();
+                  material.dispose();
+                });
+              }
+            });
+          }
+          if (renderer) {
+            renderer.dispose();
+            renderer.forceContextLoss();
+            renderer.domElement.remove();
+          }
+          charges = []; fieldObjects = []; equipotentialObjects = []; history = [];
+          selectedCharge = null; testCharge = null;
+          root = stage = renderer = scene = camera = null;
+        },
+        resize() {
+          if (!renderer || !stage || !camera) return;
+          const width = Math.max(stage.clientWidth, 1);
+          const height = Math.max(stage.clientHeight, 1);
+          renderer.setSize(width, height, false);
+          camera.aspect = width / height;
+          camera.updateProjectionMatrix();
+        }
+      };
+    })();
+
+    const SHMLesson = (() => {
+      let root, canvas, ctx, animationId = 0, resizeObserver;
+      let A = 2.5, omega = 1.4, phi = 0, time = 0;
+      let paused = false, singleRelease = false, lastTime = 0;
+      let history = [];
+      const listeners = [];
+
+      function listen(target, type, handler) {
+        target.addEventListener(type, handler);
+        listeners.push(() => target.removeEventListener(type, handler));
+      }
+
+      function physicsAt(t) {
+        return safeRun(() => {
+          // 计算当前相位：角频率乘时间，再加初相位。
+          const phase = omega * t + phi;
+          // 位移遵循 x = A cos(ωt + φ)。
+          const x = A * Math.cos(phase);
+          // 对位移关于时间求一阶导数，得到速度 v = -Aω sin(ωt + φ)。
+          const v = -A * omega * Math.sin(phase);
+          // 再求一次导数，得到加速度 a = -Aω² cos(ωt + φ) = -ω²x。
+          const a = -A * omega * omega * Math.cos(phase);
+          // 将三项物理量和相位一起返回，保证所有视图使用同一时刻数据。
+          return { phase, x, v, a };
+        }) || { phase: 0, x: 0, v: 0, a: 0 };
+      }
+
+      function line(x1, y1, x2, y2, color = '#64748b', width = 1) {
+        ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2);
+        ctx.strokeStyle = color; ctx.lineWidth = width; ctx.stroke();
+      }
+
+      function text(value, x, y, color = '#cbd5e1', size = 14, align = 'left') {
+        ctx.fillStyle = color; ctx.font = `${size}px "Microsoft YaHei", sans-serif`;
+        ctx.textAlign = align; ctx.fillText(value, x, y);
+      }
+
+      function draw() {
+        const w = canvas.clientWidth, h = canvas.clientHeight;
+        ctx.clearRect(0, 0, w, h);
+        const data = physicsAt(time);
+        const topH = Math.min(h * .55, 390);
+        const radius = Math.min(w * .12, topH * .3, 105);
+        const cy = topH * .52;
+        const circleX = Math.max(radius + 40, w * .22);
+        const oscillatorCenter = Math.max(circleX + radius * 2.1, w * .66);
+        const scale = radius / Math.max(A, .01);
+        const pointX = circleX + radius * Math.cos(data.phase);
+        const pointY = cy - radius * Math.sin(data.phase);
+        const projectedY = cy;
+        const oscillatorX = oscillatorCenter + data.x * scale;
+
+        ctx.fillStyle = 'rgba(15,23,42,.3)'; ctx.fillRect(0, 0, w, topH);
+        ctx.beginPath(); ctx.arc(circleX, cy, radius, 0, Math.PI * 2);
+        ctx.strokeStyle = '#475569'; ctx.lineWidth = 2; ctx.stroke();
+        line(circleX - radius - 12, cy, circleX + radius + 12, cy);
+        line(circleX, cy - radius - 12, circleX, cy + radius + 12);
+        line(circleX, cy, pointX, pointY, '#22d3ee', 3);
+        ctx.beginPath(); ctx.setLineDash([5, 5]); ctx.moveTo(pointX, pointY); ctx.lineTo(pointX, projectedY);
+        ctx.lineTo(oscillatorX, projectedY); ctx.strokeStyle = '#facc15'; ctx.lineWidth = 2; ctx.stroke(); ctx.setLineDash([]);
+        ctx.beginPath(); ctx.arc(pointX, pointY, 9, 0, Math.PI * 2); ctx.fillStyle = '#22d3ee'; ctx.fill();
+        text('单位圆', circleX, cy + radius + 30, '#94a3b8', 15, 'center');
+
+        line(oscillatorCenter - radius * 1.25, cy, oscillatorCenter + radius * 1.25, cy, '#64748b', 2);
+        for (let i = -5; i <= 5; i++) {
+          const tx = oscillatorCenter + i / 5 * radius;
+          line(tx, cy - 6, tx, cy + 6, '#64748b');
+        }
+        ctx.beginPath(); ctx.arc(oscillatorX, cy, 13, 0, Math.PI * 2);
+        ctx.fillStyle = '#fb7185'; ctx.shadowColor = '#fb7185'; ctx.shadowBlur = 18; ctx.fill(); ctx.shadowBlur = 0;
+        text('简谐振子', oscillatorCenter, cy + radius * .55, '#94a3b8', 15, 'center');
+        text('x', oscillatorCenter + radius * 1.35, cy + 5, '#cbd5e1', 15);
+
+        const graphTop = topH + 35, graphBottom = h - 42, graphLeft = 64, graphRight = w - 28;
+        const graphMid = (graphTop + graphBottom) / 2;
+        line(graphLeft, graphMid, graphRight, graphMid, '#64748b');
+        line(graphLeft, graphTop, graphLeft, graphBottom, '#64748b');
+        text('x(t)', graphLeft - 12, graphTop - 8, '#cbd5e1', 14, 'right');
+        text('t', graphRight, graphMid + 24, '#cbd5e1', 14, 'right');
+        if (history.length > 1) {
+          const visibleWindow = 10;
+          const minT = Math.max(0, time - visibleWindow);
+          ctx.beginPath();
+          history.filter(item => item.t >= minT).forEach((item, index) => {
+            const px = graphLeft + (item.t - minT) / visibleWindow * (graphRight - graphLeft);
+            const py = graphMid - item.x / 5.4 * (graphBottom - graphTop) / 2;
+            if (index === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+          });
+          ctx.strokeStyle = '#22d3ee'; ctx.lineWidth = 2.5; ctx.stroke();
+        }
+        root.querySelector('#xValue').textContent = data.x.toFixed(2);
+        root.querySelector('#vValue').textContent = data.v.toFixed(2);
+        root.querySelector('#aValue').textContent = data.a.toFixed(2);
+      }
+
+      function animate(timestamp) {
+        animationId = requestAnimationFrame(animate);
+        const dt = Math.min((timestamp - lastTime) / 1000 || 0, .05);
+        lastTime = timestamp;
+        if (!paused) {
+          time += dt;
+          const data = physicsAt(time);
+          history.push({ t: time, x: data.x });
+          if (history.length > 1500) history.shift();
+          if (singleRelease && time >= Math.PI * 2 / omega) {
+            paused = true; singleRelease = false;
+            root.querySelector('#pauseButton').textContent = '继续';
+          }
+        }
+        draw();
+      }
+
+      function resizeCanvas() {
+        if (!canvas) return;
+        const rect = canvas.getBoundingClientRect();
+        const ratio = Math.min(window.devicePixelRatio || 1, 2);
+        canvas.width = Math.max(1, Math.floor(rect.width * ratio));
+        canvas.height = Math.max(1, Math.floor(rect.height * ratio));
+        ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+        draw();
+      }
+
+      function resetMotion(runSingle = false) {
+        time = 0; history = [{ t: 0, x: physicsAt(0).x }];
+        paused = false; singleRelease = runSingle;
+        root.querySelector('#pauseButton').textContent = '暂停';
+      }
+
+      return {
+        id: 'shm-unit-circle',
+        title: '简谐运动与单位圆',
+        category: '振动与波',
+        tips: {
+          goals: ['建立匀速圆周运动投影与简谐运动的联系', '比较位移、速度和加速度的相位关系', '从图像理解振幅、角频率和初相位'],
+          formulas: ['x = A cos(ωt + φ)', 'v = −Aω sin(ωt + φ)', 'a = −Aω² cos(ωt + φ) = −ω²x'],
+          note: '改变初相位后点击“单次释放”，让学生预测振子的起始位置和运动方向。'
+        },
+        init(container) {
+          root = document.createElement('div');
+          root.className = 'lesson-shell';
+          root.innerHTML = `
+            <section class="stage"><canvas aria-label="简谐运动动画与位移时间图"></canvas></section>
+            <aside class="control-panel">
+              <h2>简谐运动与单位圆</h2>
+              <div class="subtitle">圆周运动的横轴投影与振子位移保持同步</div>
+              <div class="control-group">
+                <label for="amplitude"><span>振幅 A</span><span class="value" id="amplitudeValue">2.5</span></label>
+                <input id="amplitude" type="range" min="0.5" max="5" step="0.1" value="2.5">
+              </div>
+              <div class="control-group">
+                <label for="omega"><span>角频率 ω</span><span class="value" id="omegaValue">1.4 rad/s</span></label>
+                <input id="omega" type="range" min="0.5" max="3" step="0.1" value="1.4">
+              </div>
+              <div class="control-group">
+                <label for="phase"><span>初始相位 φ</span><span class="value">度</span></label>
+                <input id="phase" type="number" min="0" max="360" step="1" value="0">
+              </div>
+              <div class="control-group button-grid">
+                <button id="pauseButton">暂停</button>
+                <button id="releaseButton">单次释放</button>
+              </div>
+              <div class="control-group">
+                <div class="control-title">实时读数</div>
+                <div class="readouts">
+                  <div class="readout"><span>位移 x</span><b id="xValue">0.00</b></div>
+                  <div class="readout"><span>速度 v</span><b id="vValue">0.00</b></div>
+                  <div class="readout"><span>加速度 a</span><b id="aValue">0.00</b></div>
+                </div>
+              </div>
+            </aside>`;
+          container.appendChild(root);
+          canvas = root.querySelector('canvas');
+          ctx = canvas.getContext('2d');
+          A = 2.5; omega = 1.4; phi = 0; paused = false; singleRelease = false; lastTime = 0;
+          resetMotion();
+          const amplitude = root.querySelector('#amplitude');
+          listen(amplitude, 'input', () => {
+            A = Number(amplitude.value);
+            root.querySelector('#amplitudeValue').textContent = A.toFixed(1);
+            resetMotion();
+          });
+          const omegaInput = root.querySelector('#omega');
+          listen(omegaInput, 'input', () => {
+            omega = Number(omegaInput.value);
+            root.querySelector('#omegaValue').textContent = omega.toFixed(1) + ' rad/s';
+            resetMotion();
+          });
+          const phaseInput = root.querySelector('#phase');
+          listen(phaseInput, 'change', () => {
+            const degrees = Math.max(0, Math.min(360, Number(phaseInput.value) || 0));
+            phaseInput.value = degrees;
+            phi = degrees * Math.PI / 180;
+            resetMotion();
+          });
+          listen(root.querySelector('#pauseButton'), 'click', event => {
+            paused = !paused; singleRelease = false;
+            event.currentTarget.textContent = paused ? '继续' : '暂停';
+          });
+          listen(root.querySelector('#releaseButton'), 'click', () => resetMotion(true));
+          resizeObserver = new ResizeObserver(resizeCanvas);
+          resizeObserver.observe(canvas.parentElement);
+          resizeCanvas();
+          animationId = requestAnimationFrame(animate);
+        },
+        destroy() {
+          cancelAnimationFrame(animationId);
+          listeners.splice(0).forEach(remove => remove());
+          resizeObserver?.disconnect();
+          root = canvas = ctx = resizeObserver = null;
+          history = [];
+        },
+        resize() { resizeCanvas(); }
+      };
+    })();
+
+    registerLesson(HomeLesson);
+    registerLesson(ElectricFieldLesson);
+    registerLesson(SHMLesson);
+
+    const drawer = document.getElementById('tip-drawer');
+    const backdrop = document.getElementById('drawer-backdrop');
+    const sidebar = document.querySelector('.sidebar');
+    const mobileNavBackdrop = document.getElementById('mobile-nav-backdrop');
+    function closeMobileNav() {
+      sidebar.classList.remove('open');
+      mobileNavBackdrop.classList.remove('show');
+    }
+    document.getElementById('mobile-menu-open').addEventListener('click', () => {
+      sidebar.classList.add('open');
+      mobileNavBackdrop.classList.add('show');
+    });
+    mobileNavBackdrop.addEventListener('click', closeMobileNav);
+    function setDrawer(open) {
+      drawer.classList.toggle('open', open);
+      backdrop.classList.toggle('show', open);
+    }
+    document.getElementById('tip-open').addEventListener('click', () => setDrawer(true));
+    document.getElementById('tip-close').addEventListener('click', () => setDrawer(false));
+    backdrop.addEventListener('click', () => setDrawer(false));
+    document.addEventListener('keydown', event => {
+      if (event.key === 'Escape') { setDrawer(false); closeMobileNav(); }
+    });
+    window.addEventListener('resize', () => {
+      AppState.isMobile = window.matchMedia('(max-width: 900px)').matches;
+      AppState.currentLesson?.resize();
+    });
+
+    buildMenu();
+    switchLesson(lessonRegistry[0].id);
+  </script>
+</body>
+</html>
