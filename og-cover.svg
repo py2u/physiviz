@@ -1,21 +1,21 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
   <defs>
     <radialGradient id="bg">
-      <stop stop-color="#17365e"/>
-      <stop offset="1" stop-color="#0f172a"/>
+      <stop stop-color="#173d42"/>
+      <stop offset="1" stop-color="#07111f"/>
     </radialGradient>
     <filter id="glow"><feGaussianBlur stdDeviation="12"/></filter>
   </defs>
   <rect width="1200" height="630" fill="url(#bg)"/>
   <g transform="translate(900 315)">
-    <circle r="65" fill="#22d3ee" opacity=".2" filter="url(#glow)"/>
-    <circle r="28" fill="#22d3ee"/>
-    <ellipse rx="190" ry="78" fill="none" stroke="#22d3ee" stroke-width="5" transform="rotate(30)"/>
-    <ellipse rx="190" ry="78" fill="none" stroke="#fb7185" stroke-width="5" transform="rotate(-30)"/>
-    <circle cx="-165" cy="-92" r="14" fill="#fb7185"/>
-    <circle cx="165" cy="-92" r="14" fill="#60a5fa"/>
+    <circle r="65" fill="#6ee7c8" opacity=".2" filter="url(#glow)"/>
+    <circle r="28" fill="#6ee7c8"/>
+    <ellipse rx="190" ry="78" fill="none" stroke="#6ee7c8" stroke-width="5" transform="rotate(30)"/>
+    <ellipse rx="190" ry="78" fill="none" stroke="#f2c14e" stroke-width="5" transform="rotate(-30)"/>
+    <circle cx="-165" cy="-92" r="14" fill="#ff7a86"/>
+    <circle cx="165" cy="-92" r="14" fill="#6fa8ff"/>
   </g>
-  <text x="85" y="245" fill="#22d3ee" font-family="Arial, Microsoft YaHei, sans-serif" font-size="34" font-weight="700">PHYDEMO HUB</text>
+  <text x="85" y="245" fill="#6ee7c8" font-family="Arial, Microsoft YaHei, sans-serif" font-size="34" font-weight="700">PHYDEMO HUB</text>
   <text x="85" y="330" fill="#f8fafc" font-family="Arial, Microsoft YaHei, sans-serif" font-size="64" font-weight="700">高中物理可视化教学平台</text>
   <text x="85" y="400" fill="#b9c6d8" font-family="Arial, Microsoft YaHei, sans-serif" font-size="31">让抽象物理规律真正“看得见”</text>
 </svg>
